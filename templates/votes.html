@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VotingApp - Cast Your Vote</title>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #fde8e8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            color: #1a1a2e;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 60px;
+        }
+
+        .header-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 0.35rem 1.1rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Flash messages */
+        .flash-area {
+            max-width: 900px;
+            margin: 1.5rem auto 0;
+            padding: 0 1.5rem;
+        }
+
+        .flash-message {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-left: 4px solid #43a047;
+            border-radius: 8px;
+            color: #2e7d32;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Page hero */
+        .page-hero {
+            text-align: center;
+            padding: 2.5rem 1rem 1.5rem;
+        }
+
+        .page-hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #1a1a2e;
+            letter-spacing: -0.5px;
+        }
+
+        .page-hero p {
+            color: #6b6b8a;
+            margin-top: 0.4rem;
+            font-size: 1rem;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto 3rem;
+            padding: 0 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 0 1rem;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            padding: 1.75rem 1.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-top: 4px solid #667eea;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.18);
+        }
+
+        .card-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Vote badge */
+        .vote-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f0f2ff 0%, #e8e0ff 100%);
+            margin-bottom: 1.5rem;
+        }
+
+        .vote-count {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .vote-label {
+            font-size: 0.75rem;
+            color: #9090b0;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 0.2rem;
+        }
+
+        /* Vote button */
+        .btn-vote {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.03em;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+        }
+
+        .btn-vote:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.5);
+            opacity: 0.92;
+        }
+
+        .btn-vote:active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .vote-form {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sticky Header -->
+    <header class="header">
+        <div class="header-title">🍽️ VotingApp</div>
+        <a href="/logout" class="btn-logout">Logout</a>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-area">
+        {% for message in messages %}
+        <div class="flash-message">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Page Hero -->
+    <div class="page-hero">
+        <h1>Cast Your Vote</h1>
+        <p>Vote for your favorite restaurant</p>
+    </div>
+
+    <!-- Restaurant Grid -->
+    <div class="grid">
+        {% for r in restaurants %}
+        <div class="card">
+            <div class="card-name">{{ r.display_name }}</div>
+            <div class="vote-badge">
+                <span class="vote-count">{{ r.votes }}</span>
+                <span class="vote-label">votes</span>
+            </div>
+            <form method="POST" action="/votes/vote" class="vote-form">
+                <input type="hidden" name="restaurant" value="{{ r.name }}">
+                <button type="submit" class="btn-vote">Vote</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

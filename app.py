@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_cors import CORS, cross_origin
 from random import randrange
 import simplejson as json
@@ -23,7 +23,20 @@ ddbtable = ddb.Table(ddb_table_name)
 print("The cpustressfactor variable is set to: " + str(cpustressfactor))
 print("The memstressfactor variable is set to: " + str(memstressfactor))
 memeater=[]
-memeater=[0 for i in range(10000)] 
+memeater=[0 for i in range(10000)]
+
+# NOTE: Set SECRET_KEY env var in production to a strong random value.
+# The default is intentionally weak and must not be used in production.
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
+VOTES_PASSWORD = os.getenv('VOTES_PASSWORD', 'changeme')
+
+RESTAURANTS = [
+    {'name': 'outback', 'display_name': 'Outback Steakhouse'},
+    {'name': 'bucadibeppo', 'display_name': 'Buca di Beppo'},
+    {'name': 'ihop', 'display_name': 'IHOP'},
+    {'name': 'chipotle', 'display_name': 'Chipotle'},
+]
+RESTAURANT_NAMES = {r['name'] for r in RESTAURANTS}
 
 ## https://gist.github.com/tott/3895832
 def f(x):
@@ -51,10 +64,58 @@ def updatevote(restaurant, votes):
     )
     return str(votes)
 
+from functools import wraps
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == VOTES_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('votes'))
+        else:
+            error = 'Invalid password. Please try again.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/votes')
+@login_required
+def votes():
+    data = []
+    for r in RESTAURANTS:
+        entry = r.copy()
+        entry['votes'] = readvote(r['name'])
+        data.append(entry)
+    return render_template('votes.html', restaurants=data)
+
+# NOTE: CSRF protection is not implemented. This is an internal-only staff tool.
+# For production deployments exposed to the internet, add Flask-WTF CSRFProtect.
+@app.route('/votes/vote', methods=['POST'])
+@login_required
+def cast_vote():
+    restaurant = request.form.get('restaurant', '')
+    if restaurant in RESTAURANT_NAMES:
+        current = int(readvote(restaurant))
+        updatevote(restaurant, current + 1)
+        flash(f'Your vote for {restaurant.title()} has been counted!', 'success')
+    return redirect(url_for('votes'))
+
 @app.route('/')
 def home():
     return "<h1>Welcome to the Voting App</h1><p><b>To vote, you can call the following APIs:</b></p><p>/api/outback</p><p>/api/bucadibeppo</p><p>/api/ihop</p><p>/api/chipotle</p><b>To query the votes, you can call the following APIs:</b><p>/api/getvotes</p><p>/api/getheavyvotes (this generates artificial CPU/memory load)</p>"
 
+# NOTE: /api/* routes are intentionally unauthenticated (existing behavior, unchanged).
 @app.route("/api/outback")
 def outback():
     string_votes = readvote("outback")
