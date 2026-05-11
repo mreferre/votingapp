@@ -53,7 +53,7 @@ def updatevote(restaurant, votes):
 
 @app.route('/')
 def home():
-    return "<h1>Welcome to the Voting App</h1><p><b>To vote, you can call the following APIs:</b></p><p>/api/outback</p><p>/api/bucadibeppo</p><p>/api/ihop</p><p>/api/chipotle</p><b>To query the votes, you can call the following APIs:</b><p>/api/getvotes</p><p>/api/getheavyvotes (this generates artificial CPU/memory load)</p>"
+    return "<h1>Welcome to the Voting App</h1><p><b>To vote, you can call the following APIs:</b></p><p>/api/outback</p><p>/api/bucadibeppo</p><p>/api/ihop</p><p>/api/chipotle</p><p>/api/voteall (vote for all restaurants at once)</p><b>To query the votes, you can call the following APIs:</b><p>/api/getvotes</p><p>/api/getheavyvotes (this generates artificial CPU/memory load)</p>"
 
 @app.route("/api/outback")
 def outback():
@@ -86,6 +86,30 @@ def chipotle():
     votes += 1
     string_new_votes = updatevote("chipotle", votes)
     return string_new_votes 
+
+@app.route("/api/voteall")
+def voteall():
+    string_votes = readvote("outback")
+    votes = int(string_votes)
+    votes += 1
+    updatevote("outback", votes)
+
+    string_votes = readvote("bucadibeppo")
+    votes = int(string_votes)
+    votes += 1
+    updatevote("bucadibeppo", votes)
+
+    string_votes = readvote("ihop")
+    votes = int(string_votes)
+    votes += 1
+    updatevote("ihop", votes)
+
+    string_votes = readvote("chipotle")
+    votes = int(string_votes)
+    votes += 1
+    updatevote("chipotle", votes)
+
+    return "Votes incremented for all restaurants"
 
 @app.route("/api/getvotes")
 def getvotes():
