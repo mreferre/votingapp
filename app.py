@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_cors import CORS, cross_origin
 from random import randrange
 import simplejson as json
@@ -23,7 +23,10 @@ ddbtable = ddb.Table(ddb_table_name)
 print("The cpustressfactor variable is set to: " + str(cpustressfactor))
 print("The memstressfactor variable is set to: " + str(memstressfactor))
 memeater=[]
-memeater=[0 for i in range(10000)] 
+memeater=[0 for i in range(10000)]
+
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
+VOTES_PASSWORD = os.getenv('VOTES_PASSWORD', 'changeme')
 
 ## https://gist.github.com/tott/3895832
 def f(x):
@@ -50,6 +53,54 @@ def updatevote(restaurant, votes):
         ReturnValues='UPDATED_NEW'
     )
     return str(votes)
+
+from functools import wraps
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form.get('password') == VOTES_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('votes'))
+        else:
+            error = 'Invalid password. Please try again.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/votes')
+@login_required
+def votes():
+    restaurants = [
+        {'name': 'outback', 'display_name': 'Outback Steakhouse'},
+        {'name': 'bucadibeppo', 'display_name': "Buca di Beppo"},
+        {'name': 'ihop', 'display_name': 'IHOP'},
+        {'name': 'chipotle', 'display_name': 'Chipotle'},
+    ]
+    for r in restaurants:
+        r['votes'] = readvote(r['name'])
+    return render_template('votes.html', restaurants=restaurants)
+
+@app.route('/votes/vote', methods=['POST'])
+@login_required
+def cast_vote():
+    valid = {'outback', 'bucadibeppo', 'ihop', 'chipotle'}
+    restaurant = request.form.get('restaurant', '')
+    if restaurant in valid:
+        current = int(readvote(restaurant))
+        updatevote(restaurant, current + 1)
+    return redirect(url_for('votes'))
 
 @app.route('/')
 def home():
