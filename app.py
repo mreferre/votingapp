@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 from flask_cors import CORS, cross_origin
 from random import randrange
 import simplejson as json
@@ -53,7 +53,7 @@ def updatevote(restaurant, votes):
 
 @app.route('/')
 def home():
-    return "<h1>Welcome to the Voting App</h1><p><b>To vote, you can call the following APIs:</b></p><p>/api/outback</p><p>/api/bucadibeppo</p><p>/api/ihop</p><p>/api/chipotle</p><b>To query the votes, you can call the following APIs:</b><p>/api/getvotes</p><p>/api/getheavyvotes (this generates artificial CPU/memory load)</p>"
+    return render_template('index.html')
 
 @app.route("/api/outback")
 def outback():

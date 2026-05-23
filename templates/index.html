@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Voting App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .voting-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .vote-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .vote-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .vote-card:active {
+            transform: translateY(0);
+        }
+
+        .vote-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .vote-card .name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .vote-card .vote-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .vote-card .vote-btn:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        .vote-card .vote-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .results-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .result-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-row .label {
+            width: 130px;
+            font-weight: 500;
+            text-transform: capitalize;
+            flex-shrink: 0;
+        }
+
+        .result-row .bar-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 32px;
+            overflow: hidden;
+            margin: 0 15px;
+            position: relative;
+        }
+
+        .result-row .bar {
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.6s ease;
+            min-width: 0;
+        }
+
+        .result-row .bar.outback {
+            background: linear-gradient(90deg, #f97316, #fb923c);
+        }
+
+        .result-row .bar.bucadibeppo {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .result-row .bar.ihop {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+
+        .result-row .bar.chipotle {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .result-row .count {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .total-votes {
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #ef4444;
+        }
+
+        .loading {
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .voting-section {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .vote-card {
+                padding: 20px 15px;
+            }
+
+            .vote-card .icon {
+                font-size: 2rem;
+            }
+
+            .result-row .label {
+                width: 90px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Restaurant Voting</h1>
+    <p class="subtitle">Vote for your favorite restaurant!</p>
+
+    <div class="container">
+        <div class="voting-section">
+            <div class="vote-card" onclick="vote('outback')">
+                <div class="icon">&#127869;</div>
+                <div class="name">Outback</div>
+                <button class="vote-btn">Vote</button>
+            </div>
+            <div class="vote-card" onclick="vote('bucadibeppo')">
+                <div class="icon">&#127837;</div>
+                <div class="name">Buca di Beppo</div>
+                <button class="vote-btn">Vote</button>
+            </div>
+            <div class="vote-card" onclick="vote('ihop')">
+                <div class="icon">&#129374;</div>
+                <div class="name">IHOP</div>
+                <button class="vote-btn">Vote</button>
+            </div>
+            <div class="vote-card" onclick="vote('chipotle')">
+                <div class="icon">&#127790;</div>
+                <div class="name">Chipotle</div>
+                <button class="vote-btn">Vote</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Results</h2>
+            <div id="results">
+                <div class="loading">Loading results...</div>
+            </div>
+            <div class="total-votes" id="total-votes"></div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 2500);
+        }
+
+        async function vote(restaurant) {
+            try {
+                const response = await fetch(`/api/${restaurant}`);
+                if (!response.ok) throw new Error('Vote failed');
+                showNotification(`Voted for ${restaurant}!`);
+                await loadResults();
+            } catch (error) {
+                showNotification('Failed to register vote. Please try again.', true);
+            }
+        }
+
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/getvotes');
+                if (!response.ok) throw new Error('Failed to load results');
+                const data = await response.json();
+
+                const total = data.reduce((sum, item) => sum + item.value, 0);
+                const maxVotes = Math.max(...data.map(item => item.value), 1);
+
+                const resultsHtml = data.map(item => {
+                    const percentage = total > 0 ? (item.value / maxVotes) * 100 : 0;
+                    const displayName = item.name === 'bucadibeppo' ? 'Buca di Beppo' : item.name;
+                    return `
+                        <div class="result-row">
+                            <span class="label">${displayName}</span>
+                            <div class="bar-container">
+                                <div class="bar ${item.name}" style="width: ${percentage}%"></div>
+                            </div>
+                            <span class="count">${item.value}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('results').innerHTML = resultsHtml;
+                document.getElementById('total-votes').textContent = `Total votes: ${total}`;
+            } catch (error) {
+                document.getElementById('results').innerHTML = '<div class="loading">Unable to load results. Is the backend connected to DynamoDB?</div>';
+            }
+        }
+
+        // Load results on page load
+        loadResults();
+
+        // Auto-refresh results every 10 seconds
+        setInterval(loadResults, 10000);
+    </script>
+</body>
+</html>
