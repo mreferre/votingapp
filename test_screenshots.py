@@ -5,11 +5,12 @@ Takes screenshots of:
 2. The voting dashboard with restaurant cards
 3. The voting dashboard after casting a vote (showing updated count)
 """
+import os
 import time
 from playwright.sync_api import sync_playwright
 
-SCREENSHOTS_DIR = "/projects/sandbox/votingapp/screenshots"
-BASE_URL = "http://localhost:8091"
+SCREENSHOTS_DIR = os.getenv("SCREENSHOTS_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "screenshots"))
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8091")
 
 
 def main():
@@ -71,7 +72,7 @@ def main():
         print("  Saved: 03-after-vote.png")
 
         browser.close()
-        print("\nAll screenshots saved to /projects/sandbox/votingapp/screenshots/")
+        print(f"\nAll screenshots saved to {SCREENSHOTS_DIR}")
         print("Test completed successfully!")
 
 

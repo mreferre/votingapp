@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, request
+from flask import Flask, request, session, redirect, url_for
 from flask_cors import CORS, cross_origin
 from random import randrange
 import simplejson as json
@@ -9,6 +9,7 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 app = Flask(__name__)
+app.secret_key = os.getenv('FLASK_SECRET_KEY', os.urandom(24).hex())
 
 cors = CORS(app, resources={r"/api/*": {"Access-Control-Allow-Origin": "*"}})
 
@@ -112,10 +113,23 @@ def getheavyvotes():
     pool.map(f, range(processes))
     return string_votes
 
-@app.route("/votes")
+@app.route("/votes", methods=['GET', 'POST'])
 def votes():
-    page_password = votes_password
-    return f'''<!DOCTYPE html>
+    error_message = ''
+
+    if request.method == 'POST':
+        if 'logout' in request.form:
+            session.pop('votes_authenticated', None)
+            return redirect(url_for('votes'), code=303)
+        password_input = request.form.get('password', '')
+        if password_input == votes_password:
+            session['votes_authenticated'] = True
+            return redirect(url_for('votes'), code=303)
+        else:
+            error_message = 'Incorrect password. Please try again.'
+
+    if not session.get('votes_authenticated'):
+        return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -143,7 +157,6 @@ def votes():
             max-width: 900px;
         }}
 
-        /* Login Section */
         .login-section {{
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -217,149 +230,6 @@ def votes():
             margin-top: 4px;
         }}
 
-        /* Voting Section */
-        .voting-section {{
-            display: none;
-            animation: fadeIn 0.6s ease-out;
-        }}
-
-        .voting-header {{
-            text-align: center;
-            margin-bottom: 40px;
-        }}
-
-        .voting-header h1 {{
-            font-size: 2.2rem;
-            color: #fff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            margin-bottom: 8px;
-        }}
-
-        .voting-header p {{
-            color: rgba(255, 255, 255, 0.85);
-            font-size: 1.1rem;
-        }}
-
-        .cards-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-        }}
-
-        .restaurant-card {{
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 32px 24px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }}
-
-        .restaurant-card::before {{
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-        }}
-
-        .restaurant-card:hover {{
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }}
-
-        .restaurant-icon {{
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            font-size: 1.5rem;
-        }}
-
-        .restaurant-name {{
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
-            text-transform: capitalize;
-        }}
-
-        .vote-count {{
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: #667eea;
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }}
-
-        .vote-count.updated {{
-            animation: pulse 0.4s ease;
-        }}
-
-        .vote-label {{
-            font-size: 0.85rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }}
-
-        .vote-btn {{
-            width: 100%;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-        }}
-
-        .vote-btn:hover {{
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }}
-
-        .vote-btn:active {{
-            transform: translateY(0);
-        }}
-
-        .vote-btn:disabled {{
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }}
-
-        .logout-btn {{
-            display: block;
-            margin: 40px auto 0;
-            padding: 12px 32px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease, border-color 0.3s ease;
-        }}
-
-        .logout-btn:hover {{
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.7);
-        }}
-
         @keyframes fadeIn {{
             from {{
                 opacity: 0;
@@ -371,42 +241,229 @@ def votes():
             }}
         }}
 
-        @keyframes pulse {{
-            0% {{ transform: scale(1); }}
-            50% {{ transform: scale(1.2); }}
-            100% {{ transform: scale(1); }}
-        }}
-
         @media (max-width: 600px) {{
-            .cards-grid {{
-                grid-template-columns: 1fr;
-            }}
-
             .login-section {{
                 padding: 40px 24px;
-            }}
-
-            .voting-header h1 {{
-                font-size: 1.6rem;
             }}
         }}
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Login Section -->
         <section class="login-section" id="loginSection" aria-label="Login form">
             <h1>Restaurant Voting</h1>
             <p>Enter the password to access the voting dashboard</p>
-            <form class="login-form" id="loginForm" onsubmit="handleLogin(event)" aria-label="Password authentication">
+            <form class="login-form" id="loginForm" method="POST" action="/votes" aria-label="Password authentication">
                 <label for="passwordInput" class="sr-only" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">Password</label>
-                <input type="password" id="passwordInput" placeholder="Enter password" required autocomplete="current-password" aria-describedby="errorMsg">
+                <input type="password" id="passwordInput" name="password" placeholder="Enter password" required autocomplete="current-password" aria-describedby="errorMsg">
                 <button type="submit" aria-label="Submit password">Unlock Dashboard</button>
-                <div class="error-message" id="errorMsg" role="alert" aria-live="polite"></div>
+                <div class="error-message" id="errorMsg" role="alert" aria-live="polite">{error_message}</div>
             </form>
         </section>
+    </div>
+</body>
+</html>'''
 
-        <!-- Voting Section -->
+    return '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Voting App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Voting Section */
+        .voting-section {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .voting-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .voting-header h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+        }
+
+        .voting-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.1rem;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .restaurant-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 32px 24px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .restaurant-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .restaurant-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.5rem;
+        }
+
+        .restaurant-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .vote-count {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .vote-count.updated {
+            animation: pulse 0.4s ease;
+        }
+
+        .vote-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .vote-btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .vote-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .vote-btn:active {
+            transform: translateY(0);
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .logout-btn {
+            display: block;
+            margin: 40px auto 0;
+            padding: 12px 32px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.7);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 600px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .voting-header h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
         <section class="voting-section" id="votingSection" aria-label="Voting dashboard">
             <header class="voting-header">
                 <h1>Restaurant Voting Dashboard</h1>
@@ -442,71 +499,51 @@ def votes():
                     <button class="vote-btn" onclick="castVote('chipotle')" aria-label="Vote for Chipotle">Vote</button>
                 </article>
             </div>
-            <button class="logout-btn" onclick="handleLogout()" aria-label="Log out">Log Out</button>
+            <form method="POST" action="/votes" style="text-align: center;">
+                <input type="hidden" name="logout" value="1">
+                <button type="submit" class="logout-btn" aria-label="Log out">Log Out</button>
+            </form>
         </section>
     </div>
 
     <script>
-        const APP_PASSWORD = "{page_password}";
+        loadVotes();
 
-        function handleLogin(event) {{
-            event.preventDefault();
-            const input = document.getElementById('passwordInput');
-            const errorMsg = document.getElementById('errorMsg');
-
-            if (input.value === APP_PASSWORD) {{
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('votingSection').style.display = 'block';
-                errorMsg.textContent = '';
-                loadVotes();
-            }} else {{
-                errorMsg.textContent = 'Incorrect password. Please try again.';
-                input.value = '';
-                input.focus();
-            }}
-        }}
-
-        function handleLogout() {{
-            document.getElementById('votingSection').style.display = 'none';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('passwordInput').value = '';
-        }}
-
-        async function loadVotes() {{
-            try {{
+        async function loadVotes() {
+            try {
                 const response = await fetch('/api/getvotes');
                 const data = await response.json();
-                data.forEach(function(item) {{
+                data.forEach(function(item) {
                     const el = document.getElementById('count-' + item.name);
-                    if (el) {{
+                    if (el) {
                         const oldValue = el.textContent;
                         el.textContent = item.value;
-                        if (oldValue !== '-' && oldValue !== String(item.value)) {{
+                        if (oldValue !== '-' && oldValue !== String(item.value)) {
                             el.classList.add('updated');
-                            setTimeout(function() {{ el.classList.remove('updated'); }}, 400);
-                        }}
-                    }}
-                }});
-            }} catch (err) {{
+                            setTimeout(function() { el.classList.remove('updated'); }, 400);
+                        }
+                    }
+                });
+            } catch (err) {
                 console.error('Failed to load votes:', err);
-            }}
-        }}
+            }
+        }
 
-        async function castVote(restaurant) {{
+        async function castVote(restaurant) {
             const btn = event.currentTarget;
             btn.disabled = true;
             btn.textContent = 'Voting...';
 
-            try {{
+            try {
                 await fetch('/api/' + restaurant);
                 await loadVotes();
-            }} catch (err) {{
+            } catch (err) {
                 console.error('Failed to cast vote:', err);
-            }} finally {{
+            } finally {
                 btn.disabled = false;
                 btn.textContent = 'Vote';
-            }}
-        }}
+            }
+        }
     </script>
 </body>
 </html>'''
