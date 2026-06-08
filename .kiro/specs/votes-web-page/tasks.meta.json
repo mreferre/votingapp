@@ -1,0 +1,49 @@
+{
+  "pbtResults": {
+    "1.1 Write property test for password configuration / fail-closed behavior": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909751331
+    },
+    "1.2 Write property test for correct-password acceptance": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909752464
+    },
+    "1.3 Write property test for password denial": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909753352
+    },
+    "3.1 Write property test for authenticated grid rendering": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909754406
+    },
+    "3.2 Write property test for unauthenticated page exposing no data": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909755288
+    },
+    "4.1 Write property test for read-failure handling": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909756378
+    },
+    "5.1 Write property test for unauthenticated no-mutation": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909759978
+    },
+    "5.2 Write property test for successful increment": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909761086
+    },
+    "5.3 Write property test for non-interference": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909762076
+    },
+    "5.4 Write property test for invalid-name rejection": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909762836
+    },
+    "5.5 Write property test for write-failure handling": {
+      "status": "passed",
+      "lastRunTimestamp": 1780909763606
+    }
+  },
+  "executionHistory": {}
+}
