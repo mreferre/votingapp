@@ -20,3 +20,13 @@ run:
       value: 'service.name=votingapp'
     - name: DDB_AWS_REGION
       value: "us-west-2"
+    - name: DDB_TABLE_NAME
+      value: "votingapp-restaurants"
+    # VOTES_PASSWORD gates the password-protected /votes page. The app fails
+    # closed when this is unset or empty (every /votes interaction returns 401),
+    # so a non-empty value MUST be supplied. For the GitHub-source deploy path
+    # set it here (or as a service-level secret); for the ECR-image deploy path
+    # it is injected via ImageConfiguration.RuntimeEnvironmentVariables on the
+    # create-service call. Container port stays 8080.
+    - name: VOTES_PASSWORD
+      value: "change-me-before-deploy"

@@ -1,0 +1,13 @@
+# Test-only dependencies for the votes-web-page feature.
+#
+# These are NOT required by the App Runner runtime and MUST NOT be added to
+# requirements.txt (which is what the deployment installs). Install locally
+# for running the test suite:
+#
+#     pip install -r requirements.txt -r requirements-dev.txt
+#     pytest -q test_votes.py
+#
+# DynamoDB is mocked in the tests, so no AWS access is needed to run them.
+
+pytest>=7.0
+hypothesis>=6.0
