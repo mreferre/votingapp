@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Voting App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+
+        .voting-section {
+            margin-bottom: 32px;
+        }
+
+        .voting-section h2 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .vote-btn {
+            padding: 16px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            color: #ffffff;
+        }
+
+        .vote-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .vote-btn:active {
+            transform: translateY(0);
+        }
+
+        .vote-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .vote-btn.outback {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .vote-btn.bucadibeppo {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .vote-btn.ihop {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .vote-btn.chipotle {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .results-section {
+            margin-top: 24px;
+        }
+
+        .results-section h2 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .result-item {
+            margin-bottom: 16px;
+        }
+
+        .result-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #444;
+        }
+
+        .result-bar {
+            height: 24px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .result-bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            min-width: 0;
+        }
+
+        .result-bar-fill.outback {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .result-bar-fill.bucadibeppo {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .result-bar-fill.ihop {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+
+        .result-bar-fill.chipotle {
+            background: linear-gradient(135deg, #fa709a, #fee140);
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .status-message.error {
+            background: #ffe0e0;
+            color: #d32f2f;
+            display: block;
+        }
+
+        .status-message.success {
+            background: #e0f7e0;
+            color: #2e7d32;
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .buttons-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vote-btn {
+                padding: 14px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Restaurant Voting App</h1>
+            <p>Vote for your favorite restaurant!</p>
+        </div>
+
+        <div class="voting-section">
+            <h2>Cast Your Vote</h2>
+            <div class="buttons-grid">
+                <button class="vote-btn outback" onclick="vote('outback')" id="btn-outback">Outback</button>
+                <button class="vote-btn bucadibeppo" onclick="vote('bucadibeppo')" id="btn-bucadibeppo">Buca di Beppo</button>
+                <button class="vote-btn ihop" onclick="vote('ihop')" id="btn-ihop">IHOP</button>
+                <button class="vote-btn chipotle" onclick="vote('chipotle')" id="btn-chipotle">Chipotle</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Current Results</h2>
+            <div id="results">
+                <div class="loading">Loading results...</div>
+            </div>
+        </div>
+
+        <div id="status" class="status-message"></div>
+    </div>
+
+    <script>
+        const restaurantNames = {
+            'outback': 'Outback',
+            'bucadibeppo': 'Buca di Beppo',
+            'ihop': 'IHOP',
+            'chipotle': 'Chipotle'
+        };
+
+        function showStatus(message, type) {
+            var statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status-message ' + type;
+            setTimeout(function() {
+                statusEl.className = 'status-message';
+            }, 3000);
+        }
+
+        function setButtonsDisabled(disabled) {
+            var buttons = document.querySelectorAll('.vote-btn');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = disabled;
+            }
+        }
+
+        function fetchResults() {
+            fetch('/api/getvotes')
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch results');
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    renderResults(data);
+                })
+                .catch(function(error) {
+                    var resultsEl = document.getElementById('results');
+                    resultsEl.innerHTML = '<div class="loading">Unable to load results. The server may be unavailable.</div>';
+                });
+        }
+
+        function renderResults(data) {
+            var resultsEl = document.getElementById('results');
+            var maxVotes = 0;
+
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].value > maxVotes) {
+                    maxVotes = data[i].value;
+                }
+            }
+
+            var html = '';
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var percentage = maxVotes > 0 ? (item.value / maxVotes) * 100 : 0;
+                var displayName = restaurantNames[item.name] || item.name;
+
+                html += '<div class="result-item">';
+                html += '<div class="result-label"><span>' + displayName + '</span><span>' + item.value + ' votes</span></div>';
+                html += '<div class="result-bar"><div class="result-bar-fill ' + item.name + '" style="width: ' + percentage + '%"></div></div>';
+                html += '</div>';
+            }
+
+            resultsEl.innerHTML = html;
+        }
+
+        function vote(restaurant) {
+            setButtonsDisabled(true);
+
+            fetch('/api/' + restaurant)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Vote failed');
+                    }
+                    return response.text();
+                })
+                .then(function() {
+                    var displayName = restaurantNames[restaurant] || restaurant;
+                    showStatus('Vote recorded for ' + displayName + '!', 'success');
+                    fetchResults();
+                })
+                .catch(function(error) {
+                    showStatus('Failed to record vote. Please try again.', 'error');
+                })
+                .finally(function() {
+                    setButtonsDisabled(false);
+                });
+        }
+
+        // Load results on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchResults();
+        });
+    </script>
+</body>
+</html>
