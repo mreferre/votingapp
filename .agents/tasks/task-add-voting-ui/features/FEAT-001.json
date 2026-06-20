@@ -1,0 +1,30 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Add a web-based voting UI served by Flask. Create a templates/index.html file with a responsive single-page application that allows users to vote for restaurants and view current vote counts. Modify app.py to serve this template from the / route.",
+  "status": "in_progress",
+  "steps": [
+    "Create directory templates/ in the project root (/projects/sandbox/votingapp/templates/)",
+    "Create templates/index.html with a complete single-page voting UI that includes: (a) A header/title section with the app name, (b) Four voting buttons - one for each restaurant (Outback, Buca di Beppo, IHOP, Chipotle), (c) A results section showing current vote counts, (d) Embedded CSS for a clean, modern responsive design, (e) Embedded JavaScript that: calls POST to /api/<restaurant> when a vote button is clicked, calls GET /api/getvotes on page load and after each vote to refresh results, displays vote counts visually (e.g., bar chart or progress bars), handles errors gracefully",
+    "Modify app.py: add 'render_template' to the Flask import statement (line 3: from flask import Flask, render_template), then update the home() function to return render_template('index.html') instead of the current inline HTML string",
+    "Verify that app.py is syntactically valid by running: cd /projects/sandbox/votingapp && python3 -c \"import ast; ast.parse(open('app.py').read()); print('Syntax OK')\"",
+    "Verify the template exists and is valid HTML by checking the file was created at templates/index.html"
+  ],
+  "acceptance_criteria": [
+    "templates/index.html exists and contains a complete HTML document with embedded CSS and JavaScript",
+    "The HTML includes vote buttons for all four restaurants (outback, bucadibeppo, ihop, chipotle)",
+    "The JavaScript fetches /api/getvotes to display current results",
+    "The JavaScript calls /api/<restaurant> to cast votes when buttons are clicked",
+    "app.py imports render_template from flask",
+    "The home() route returns render_template('index.html')",
+    "app.py passes syntax validation (python3 -c \"import ast; ast.parse(open('app.py').read())\")"
+  ],
+  "verification": [
+    "cd /projects/sandbox/votingapp && python3 -c \"import ast; ast.parse(open('app.py').read()); print('Syntax OK')\"",
+    "cd /projects/sandbox/votingapp && python3 -c \"from flask import Flask, render_template; print('Imports OK')\"",
+    "test -f /projects/sandbox/votingapp/templates/index.html && echo 'Template exists'",
+    "cd /projects/sandbox/votingapp && grep -q 'render_template' app.py && echo 'render_template found in app.py'"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
