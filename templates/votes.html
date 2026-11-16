@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>Votes dashboard</title>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --text: #1b2230;
+  --muted: #546074;
+  --border: #d6dbe6;
+  --accent: #3b4fd8;
+  --accent-text: #ffffff;
+  --accent-hover: #2e3fb0;
+  --bar-bg: #e4e8f2;
+  --leader: #0b7a4b;
+  --error-bg: #fde8e8;
+  --error-text: #8a1c1c;
+  --focus: #b45309;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(20, 30, 60, .08), 0 4px 14px rgba(20, 30, 60, .06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1420;
+    --surface: #1a2133;
+    --text: #e8ecf6;
+    --muted: #a3adc4;
+    --border: #2d3752;
+    --accent: #8fa0ff;
+    --accent-text: #0f1420;
+    --accent-hover: #b0bcff;
+    --bar-bg: #2a3350;
+    --leader: #5fd9a0;
+    --error-bg: #3a1c20;
+    --error-text: #ffb4b4;
+    --focus: #fbbf24;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+.skip-link {
+  position: absolute; left: .5rem; top: -4rem;
+  background: var(--surface); color: var(--text);
+  padding: .5rem .75rem; border-radius: 8px; z-index: 10;
+}
+.skip-link:focus { top: .5rem; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+header, main, footer { max-width: 64rem; margin: 0 auto; padding: 1rem 1.25rem; }
+header { padding-top: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; justify-content: space-between; }
+h1 { margin: 0; font-size: clamp(1.5rem, 4vw, 2.25rem); line-height: 1.2; }
+.subtitle { margin: .25rem 0 0; color: var(--muted); }
+.total { text-align: right; }
+.total strong { display: block; font-size: 2rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.total span { color: var(--muted); font-size: .9rem; }
+.banner {
+  margin: 0 0 1rem; padding: .75rem 1rem; border-radius: 10px;
+  background: var(--error-bg); color: var(--error-text);
+  border: 1px solid currentColor;
+}
+.banner[hidden] { display: none; }
+.grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 1.25rem; display: flex; flex-direction: column; gap: .75rem;
+}
+.card[data-leader="true"] { border-color: var(--leader); border-width: 2px; padding: calc(1.25rem - 1px); }
+.card h2 { margin: 0; font-size: 1.2rem; display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; }
+.badge { font-size: .75rem; font-weight: 600; color: var(--leader); text-transform: uppercase; letter-spacing: .04em; }
+.badge[hidden] { display: none; }
+.count { font-size: 2.5rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.count-label { color: var(--muted); font-size: .9rem; }
+meter { width: 100%; height: .6rem; border-radius: 999px; }
+meter::-webkit-meter-bar { background: var(--bar-bg); border: 0; border-radius: 999px; height: .6rem; }
+meter::-webkit-meter-optimum-value, meter::-webkit-meter-suboptimum-value, meter::-webkit-meter-even-less-good-value { background: var(--accent); border-radius: 999px; }
+meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
+@media (prefers-reduced-motion: no-preference) {
+  meter::-webkit-meter-optimum-value { transition: width .4s ease; }
+  .count.bump { animation: bump .35s ease; }
+}
+@keyframes bump { 50% { transform: scale(1.12); } }
+button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  border: 0; border-radius: 10px; padding: .75rem 1rem; min-height: 2.75rem;
+  background: var(--accent); color: var(--accent-text);
+}
+button:hover { background: var(--accent-hover); }
+button[disabled] { opacity: .6; cursor: progress; }
+button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+button.secondary:hover { background: var(--bar-bg); }
+.toolbar { margin: 1.25rem 0 0; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.status { margin: 0; color: var(--muted); min-height: 1.5em; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+footer { color: var(--muted); font-size: .85rem; }
+@media (forced-colors: active) {
+  .card { border: 1px solid CanvasText; }
+  button { border: 1px solid ButtonText; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#restaurants">Skip to restaurants</a>
+<header>
+  <div>
+    <h1>Votes dashboard</h1>
+    <p class="subtitle">Vote for your favourite restaurant. Counts update without reloading.</p>
+  </div>
+  <div class="total" aria-label="Total votes">
+    <strong id="total">0</strong>
+    <span>total votes</span>
+  </div>
+</header>
+<main id="main">
+  <div id="error" class="banner" role="alert"{% if not error %} hidden{% endif %}>{{ error or "" }}</div>
+  <h2 class="sr-only">Restaurants</h2>
+  <ul id="restaurants" class="grid">
+    {% for r in restaurants %}
+    <li class="card" data-slug="{{ r.slug }}" data-votes="{{ r.votes if r.votes is not none else '' }}">
+      <h2 id="name-{{ r.slug }}">{{ r.name }} <span class="badge" hidden>Leading</span></h2>
+      <div>
+        <div class="count" data-count>{{ r.votes if r.votes is not none else "–" }}</div>
+        <div class="count-label">votes</div>
+      </div>
+      <meter min="0" max="100" value="0" aria-label="{{ r.name }} share of all votes" data-share></meter>
+      <button type="button" data-vote aria-describedby="name-{{ r.slug }}">Vote for {{ r.name }}</button>
+    </li>
+    {% endfor %}
+  </ul>
+  <div class="toolbar">
+    <button type="button" class="secondary" id="refresh">Refresh counts</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </div>
+</main>
+<footer>Counts are read from the same data as the <code>/api</code> endpoints.</footer>
+<script>
+(function () {
+  "use strict";
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".card"));
+  var statusEl = document.getElementById("status");
+  var errorEl = document.getElementById("error");
+  var totalEl = document.getElementById("total");
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function say(msg) { statusEl.textContent = msg; }
+  function showError(msg) { errorEl.textContent = msg; errorEl.hidden = false; }
+  function clearError() { errorEl.textContent = ""; errorEl.hidden = true; }
+  function nameOf(card) { return card.querySelector("h2").firstChild.textContent.trim(); }
+
+  function render(counts, bumpSlug) {
+    var total = 0, max = -1;
+    cards.forEach(function (c) {
+      var v = counts[c.dataset.slug];
+      if (typeof v === "number") { c.dataset.votes = v; total += v; if (v > max) max = v; }
+    });
+    cards.forEach(function (c) {
+      var v = parseInt(c.dataset.votes, 10);
+      var known = !isNaN(v);
+      var el = c.querySelector("[data-count]");
+      el.textContent = known ? v : "–";
+      c.querySelector("[data-share]").value = known && total ? Math.round(100 * v / total) : 0;
+      var leader = known && max > 0 && v === max;
+      c.dataset.leader = leader ? "true" : "false";
+      c.querySelector(".badge").hidden = !leader;
+      if (bumpSlug === c.dataset.slug && !reduceMotion) {
+        el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+      }
+    });
+    totalEl.textContent = total;
+  }
+
+  function currentCounts() {
+    var out = {};
+    cards.forEach(function (c) { var v = parseInt(c.dataset.votes, 10); if (!isNaN(v)) out[c.dataset.slug] = v; });
+    return out;
+  }
+
+  function explain(res) {
+    if (res.status === 401) return "Your session expired. Reload the page and sign in again.";
+    return res.json().then(function (b) { return b.error || ("Request failed (" + res.status + ")."); },
+                           function () { return "Request failed (" + res.status + ")."; });
+  }
+
+  function request(url, opts) {
+    opts = opts || {};
+    opts.credentials = "same-origin";
+    opts.headers = Object.assign({ "X-Requested-With": "fetch", "Accept": "application/json" }, opts.headers);
+    return fetch(url, opts).then(function (res) {
+      if (res.ok) return res.json();
+      return Promise.resolve(explain(res)).then(function (m) { throw new Error(m); });
+    }, function () { throw new Error("Network error. Check your connection and try again."); });
+  }
+
+  cards.forEach(function (card) {
+    var btn = card.querySelector("[data-vote]");
+    btn.addEventListener("click", function () {
+      var slug = card.dataset.slug, name = nameOf(card);
+      btn.disabled = true; btn.setAttribute("aria-busy", "true"); say("Sending your vote for " + name + "…");
+      request("/votes/vote/" + encodeURIComponent(slug), { method: "POST" })
+        .then(function (data) {
+          var counts = currentCounts(); counts[slug] = data.votes;
+          clearError(); render(counts, slug);
+          say("Vote recorded. " + name + " now has " + data.votes + (data.votes === 1 ? " vote." : " votes."));
+        })
+        .catch(function (err) { showError(err.message); say("Vote for " + name + " failed."); })
+        .then(function () { btn.disabled = false; btn.removeAttribute("aria-busy"); });
+    });
+  });
+
+  var refresh = document.getElementById("refresh");
+  function load(announce) {
+    refresh.disabled = true;
+    return request("/votes/data")
+      .then(function (counts) { clearError(); render(counts); if (announce) say("Counts refreshed."); })
+      .catch(function (err) { showError(err.message); if (announce) say("Refresh failed."); })
+      .then(function () { refresh.disabled = false; });
+  }
+  refresh.addEventListener("click", function () { load(true); });
+
+  render(currentCounts());
+})();
+</script>
+</body>
+</html>

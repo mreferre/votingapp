@@ -17,6 +17,24 @@ This is a high level diagram of the application architecture:
 
 ![votingapp-architecture](/images/votingapp-architecture.png)
 
+### Votes page (`/votes`)
+
+`/votes` is a password-protected web page that shows the current votes for the four restaurants and lets you vote without reloading the page. It is protected with HTTP Basic auth: the browser asks for a username and password. The username is ignored; only the password is checked, against the `VOTES_PASSWORD` environment variable, using a constant-time comparison.
+
+- If `VOTES_PASSWORD` is unset or empty, access is **denied to everyone** (fail closed). Set it as a secret in your service configuration; do not commit it to the repository.
+- Use HTTPS in front of the app (App Runner provides it). Basic auth sends the password with every request.
+- The page uses three paths, all behind the same password: `GET /votes` (the page), `GET /votes/data` (counts as JSON) and `POST /votes/vote/<restaurant>` (casts one vote through the existing vote logic). The POST also needs an `X-Requested-With: fetch` header, which the page sends, as a CSRF guard.
+- The existing `/api/*` routes are unchanged and remain public.
+
+Try it locally without AWS (uses an in-memory fake DynamoDB):
+
+```
+pip install -r requirements.txt -r requirements-dev.txt
+VOTES_PASSWORD=choose-a-password python docs/proof/run_fake_app.py 8080
+```
+
+Run the tests with `python -m pytest`. They use a fake DynamoDB (`moto`), so no AWS access is needed.
+
 ### How to set up the application
 
 This is a classic Python application. To use it with AWS App Runner you can build the image upfront (a `Dockerfile` is provided) and push it to ECR or you can provide the source code directly. If you are deploying the application with AWS App Runner, the root of the repository contains the `apprunner.yaml` file used to configure the required parameters for runtime. The requirement to deploy the application is to create and initialize the DynamoDB table and set the proper permissions. In the [preparation](/preparation) folder there are instructions and code to make this happen. 
@@ -57,6 +75,7 @@ aws apprunner create-service --cli-input-json file://apprunner_cli_input.json
 #### Variables
 
 - `DDB_AWS_REGION` this variable is required and needs to be set to the region of the DynamoDB table.
+- `VOTES_PASSWORD` password for the `/votes` page (required to use it; if unset the page is inaccessible)
 - `DDB_TABLE_NAME` this variable is optional and contains the DynamoDB table name (default: `votingapp-restaurants`)
 - `MEMSTRESSFACTOR` and `CPUSTRESSFACTOR` are optional and governs the behaviour of the artificial load (experimental)
 - `OTEL_PYTHON_ID_GENERATOR` and `OTEL_PROPAGATORS` are required to enable the X-Ray integration
