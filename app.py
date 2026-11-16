@@ -1,6 +1,8 @@
+import hmac
 import os
+import secrets
 
-from flask import Flask
+from flask import Flask, abort, jsonify, redirect, render_template, request, session, url_for
 from flask_cors import CORS, cross_origin
 from random import randrange
 import simplejson as json
@@ -9,6 +11,9 @@ from multiprocessing import Pool
 from multiprocessing import cpu_count
 
 app = Flask(__name__)
+# Used to sign the session cookie of the /votes page. If unset, /votes denies access.
+app.secret_key = os.getenv('SECRET_KEY') or None
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax')
 
 cors = CORS(app, resources={r"/api/*": {"Access-Control-Allow-Origin": "*"}})
 
@@ -110,6 +115,86 @@ def getheavyvotes():
     pool = Pool(processes)
     pool.map(f, range(processes))
     return string_votes
+
+# ---- /votes: password protected page -------------------------------------
+RESTAURANTS = [
+    ("outback", "Outback"),
+    ("bucadibeppo", "Buca di Beppo"),
+    ("ihop", "IHOP"),
+    ("chipotle", "Chipotle"),
+]
+
+def votes_configured():
+    # no hardcoded default: without both variables nobody gets in
+    return bool(os.getenv('VOTES_PASSWORD')) and bool(app.secret_key)
+
+def is_authed():
+    return votes_configured() and session.get('votes_auth') is True
+
+def csrf_token():
+    if 'csrf' not in session:
+        session['csrf'] = secrets.token_urlsafe(32)
+    return session['csrf']
+
+def csrf_ok():
+    sent = request.headers.get('X-CSRF-Token') or request.form.get('csrf_token') or ''
+    expected = session.get('csrf', '')
+    return bool(expected) and hmac.compare_digest(sent.encode(), expected.encode())
+
+def no_store(resp):
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+@app.route('/votes')
+def votes_page():
+    if not votes_configured():
+        return no_store(app.make_response(("The votes page is disabled: VOTES_PASSWORD and SECRET_KEY are not set.", 503)))
+    if not is_authed():
+        return no_store(app.make_response(render_template('votes_login.html', csrf_token=csrf_token(), error=request.args.get('error'))))
+    rows = []
+    error = None
+    for key, label in RESTAURANTS:
+        try:
+            rows.append({"key": key, "label": label, "votes": int(readvote(key))})
+        except Exception:
+            rows.append({"key": key, "label": label, "votes": None})
+            error = "Some counts could not be loaded."
+    return no_store(app.make_response(render_template('votes.html', rows=rows, csrf_token=csrf_token(), error=error, notice=request.args.get('notice'))))
+
+@app.route('/votes/login', methods=['POST'])
+def votes_login():
+    if not votes_configured():
+        abort(503)
+    if not csrf_ok():
+        abort(403)
+    supplied = request.form.get('password', '')
+    if hmac.compare_digest(supplied.encode(), os.environ['VOTES_PASSWORD'].encode()):
+        session.clear()
+        session['votes_auth'] = True
+        csrf_token()
+        return redirect(url_for('votes_page'))
+    return redirect(url_for('votes_page', error=1)), 303
+
+@app.route('/votes/logout', methods=['POST'])
+def votes_logout():
+    if not csrf_ok():
+        abort(403)
+    session.clear()
+    return redirect(url_for('votes_page'))
+
+@app.route('/votes/vote/<key>', methods=['POST'])
+def votes_vote(key):
+    if not is_authed():
+        abort(401)
+    if not csrf_ok():
+        abort(403)
+    if key not in dict(RESTAURANTS):
+        abort(404)
+    # same read-then-write logic as the /api/<restaurant> routes
+    new_votes = int(updatevote(key, int(readvote(key)) + 1))
+    if request.headers.get('X-Requested-With') == 'fetch':
+        return no_store(jsonify(name=key, votes=new_votes))
+    return redirect(url_for('votes_page', notice=dict(RESTAURANTS)[key]))
 
 if __name__ == '__main__':
    app.run(host=os.getenv('IP', '0.0.0.0'), port=int(os.getenv('PORT', 8080)))

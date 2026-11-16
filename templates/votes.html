@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<title>Votes · Restaurants</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='votes.css') }}">
+</head>
+<body>
+<a class="skip" href="#main">Skip to votes</a>
+<header class="bar">
+  <h1>Restaurant votes</h1>
+  <form method="post" action="{{ url_for('votes_logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button type="submit" class="ghost">Sign out</button>
+  </form>
+</header>
+<main id="main">
+  {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
+  <p id="status" class="status" role="status" aria-live="polite">{% if notice %}Vote counted for {{ notice }}.{% endif %}</p>
+  <ul class="grid" aria-label="Restaurants">
+    {% for r in rows %}
+    <li class="row" data-key="{{ r.key }}">
+      <h2>{{ r.label }}</h2>
+      <p class="count"><span class="num" data-count>{{ r.votes if r.votes is not none else '–' }}</span> <span class="unit">votes</span></p>
+      <form method="post" action="{{ url_for('votes_vote', key=r.key) }}" data-vote-form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" aria-label="Vote for {{ r.label }}">Vote</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</main>
+<script>
+(function () {
+  var status = document.getElementById('status');
+  var token = document.querySelector('meta[name="csrf-token"]').content;
+  document.querySelectorAll('[data-vote-form]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      if (!window.fetch) return;            // no fetch: normal form post + redirect
+      e.preventDefault();
+      var row = form.closest('.row'), btn = form.querySelector('button');
+      var label = row.querySelector('h2').textContent;
+      btn.disabled = true;
+      fetch(form.action, {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'X-CSRF-Token': token, 'X-Requested-With': 'fetch'}
+      }).then(function (r) {
+        if (r.status === 401) { window.location.reload(); return null; }
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      }).then(function (d) {
+        if (!d) return;
+        var n = row.querySelector('[data-count]');
+        n.textContent = d.votes;
+        n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
+        status.textContent = 'Vote counted for ' + label + '. Now ' + d.votes + '.';
+      }).catch(function () {
+        status.textContent = 'Could not vote for ' + label + '. Please try again.';
+      }).then(function () { btn.disabled = false; });
+    });
+  });
+})();
+</script>
+</body>
+</html>

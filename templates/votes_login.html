@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sign in · Votes</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='votes.css') }}">
+</head>
+<body>
+<main class="card narrow">
+  <h1>Restaurant votes</h1>
+  <p class="muted">Enter the password to continue.</p>
+  {% if error %}<p class="alert" role="alert">Wrong password. Try again.</p>{% endif %}
+  <form method="post" action="{{ url_for('votes_login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    <button type="submit">Sign in</button>
+  </form>
+</main>
+</body>
+</html>

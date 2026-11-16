@@ -58,6 +58,7 @@ aws apprunner create-service --cli-input-json file://apprunner_cli_input.json
 
 - `DDB_AWS_REGION` this variable is required and needs to be set to the region of the DynamoDB table.
 - `DDB_TABLE_NAME` this variable is optional and contains the DynamoDB table name (default: `votingapp-restaurants`)
+- `VOTES_PASSWORD` and `SECRET_KEY` enable the password-protected `/votes` page (a voting UI with a vote button per restaurant). Both are required for that page: if either is unset, `/votes` returns 503 and nobody can sign in. `SECRET_KEY` signs the session cookie; use a long random value (e.g. `python3 -c "import secrets; print(secrets.token_hex(32))"`). There are no defaults. Use HTTPS in production.
 - `MEMSTRESSFACTOR` and `CPUSTRESSFACTOR` are optional and governs the behaviour of the artificial load (experimental)
 - `OTEL_PYTHON_ID_GENERATOR` and `OTEL_PROPAGATORS` are required to enable the X-Ray integration
 - `OTEL_PYTHON_DISABLED_INSTRUMENTATIONS` and `OTEL_RESOURCE_ATTRIBUTES` are optional and relates to the X-Ray integration
