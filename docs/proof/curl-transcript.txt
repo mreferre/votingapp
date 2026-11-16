@@ -1,0 +1,43 @@
+$ curl -i http://127.0.0.1:8081/votes   # no credentials
+HTTP/1.1 401 UNAUTHORIZED
+Server: Werkzeug/2.2.2 Python/3.9.25
+Date: Mon, 16 Nov 2026 17:14:16 GMT
+WWW-Authenticate: Basic realm="Votes", charset="UTF-8"
+Cache-Control: no-store
+Content-Type: text/html; charset=utf-8
+Content-Length: 24
+Connection: close
+
+$ curl -i -u demo:wrong http://127.0.0.1:8081/votes
+HTTP/1.1 401 UNAUTHORIZED
+Server: Werkzeug/2.2.2 Python/3.9.25
+Date: Mon, 16 Nov 2026 17:14:16 GMT
+
+$ curl -i -u demo:<password> http://127.0.0.1:8081/votes | head
+HTTP/1.1 200 OK
+Server: Werkzeug/2.2.2 Python/3.9.25
+Date: Mon, 16 Nov 2026 17:14:16 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 11264
+Cache-Control: no-store
+Connection: close
+
+
+$ curl -u demo:<password> http://127.0.0.1:8081/votes/data
+{"bucadibeppo":7,"chipotle":4,"ihop":19,"outback":12}
+
+$ curl -i http://127.0.0.1:8081/votes/data   # no credentials: counts hidden
+HTTP/1.1 401 UNAUTHORIZED
+
+$ curl -i -X POST http://127.0.0.1:8081/votes/vote/ihop   # no credentials
+HTTP/1.1 401 UNAUTHORIZED
+
+$ curl -X POST -u demo:<password> (no X-Requested-With header)
+HTTP/1.1 400 BAD REQUEST
+
+$ curl -X POST -u demo:<password> -H "X-Requested-With: fetch" http://127.0.0.1:8081/votes/vote/ihop
+{"slug":"ihop","votes":20}
+
+$ curl http://127.0.0.1:8081/api/getvotes   # existing public API, unchanged
+[{"name": "outback", "value": 12},{"name": "bucadibeppo", "value": 7},{"name": "ihop", "value": 20}, {"name": "chipotle", "value": 4}]
+HTTP/1.1 200 OK

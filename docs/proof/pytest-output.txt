@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.25, pytest-8.4.2, pluggy-1.6.0 -- /tmp/full/bin/python
+cachedir: .pytest_cache
+rootdir: /local/home/mreferre/.kiro/crew/workspace/votingapp
+collecting ... collected 16 items
+
+tests/test_votes_page.py::test_no_credentials_is_401_with_challenge[get-/votes] PASSED [  6%]
+tests/test_votes_page.py::test_no_credentials_is_401_with_challenge[get-/votes/data] PASSED [ 12%]
+tests/test_votes_page.py::test_no_credentials_is_401_with_challenge[post-/votes/vote/ihop] PASSED [ 18%]
+tests/test_votes_page.py::test_wrong_password_is_401[get-/votes] PASSED  [ 25%]
+tests/test_votes_page.py::test_wrong_password_is_401[get-/votes/data] PASSED [ 31%]
+tests/test_votes_page.py::test_wrong_password_is_401[post-/votes/vote/ihop] PASSED [ 37%]
+tests/test_votes_page.py::test_wrong_password_does_not_change_votes PASSED [ 43%]
+tests/test_votes_page.py::test_right_password_is_200 PASSED              [ 50%]
+tests/test_votes_page.py::test_unset_or_empty_password_denies_everyone[None] PASSED [ 56%]
+tests/test_votes_page.py::test_unset_or_empty_password_denies_everyone[] PASSED [ 62%]
+tests/test_votes_page.py::test_responses_are_not_cacheable PASSED        [ 68%]
+tests/test_votes_page.py::test_page_lists_all_four_restaurants_with_counts PASSED [ 75%]
+tests/test_votes_page.py::test_data_endpoint_returns_counts PASSED       [ 81%]
+tests/test_votes_page.py::test_vote_increments_count PASSED              [ 87%]
+tests/test_votes_page.py::test_vote_requires_csrf_header_and_known_restaurant PASSED [ 93%]
+tests/test_votes_page.py::test_existing_routes_still_public_and_same_format PASSED [100%]
+
+============================== 16 passed in 1.44s ==============================

@@ -1,0 +1,3 @@
+chipotle before=4 after=5 no_reload=True
+status line: Vote recorded. Chipotle now has 5 votes.
+error banner: Could not record your vote.
